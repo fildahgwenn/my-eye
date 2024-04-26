@@ -119,7 +119,7 @@ def main():
         st.write("")
 
     with col2:
-        st.image("images/1.jpeg", use_column_width=True, caption="Bridging the Gap")
+        st.image("images/1.jpg", use_column_width=True, caption="Bridging the Gap")
 
     with col3:
         st.write("")
