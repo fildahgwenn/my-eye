@@ -71,7 +71,7 @@ def visualize_speech():
 def main():
     st.set_page_config(
     page_title="Assistive app for the visually impaired",
-    page_icon=st.image("images/2.png", use_column_width=True)
+    page_icon="👁️‍🗨️",
     initial_sidebar_state="collapsed",
     menu_items={
         'Get Help': 'https://www.extremelycoolapp.com/help',
