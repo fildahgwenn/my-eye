@@ -35,6 +35,54 @@ def initialize_page():
         }
     )
 
+##
+@st.cache_resource
+def initialize_image_captioning():
+    processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+    model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
+    return processor, model
+
+@st.cache_resource
+def initialize_speech_synthesis():
+    processor = SpeechT5Processor.from_pretrained("microsoft/speecht5_tts")
+    model = SpeechT5ForTextToSpeech.from_pretrained("microsoft/speecht5_tts")
+    vocoder = SpeechT5HifiGan.from_pretrained("microsoft/speecht5_hifigan")
+    embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validation")
+    speaker_embeddings = torch.tensor(embeddings_dataset[7306]["xvector"]).unsqueeze(0)
+    return processor, model, vocoder, speaker_embeddings
+
+def generate_caption(processor, model, image):
+    inputs = processor(image, return_tensors="pt")
+    out = model.generate(**inputs)
+    output_caption = processor.decode(out[0], skip_special_tokens=True)
+    return output_caption
+
+def generate_speech(processor, model, vocoder, speaker_embeddings, caption):
+    inputs = processor(text=caption, return_tensors="pt")
+    speech = model.generate_speech(inputs["input_ids"], speaker_embeddings, vocoder=vocoder)
+    sf.write("speech.wav", speech.numpy(), samplerate=16000)
+
+def play_sound():
+    audio_file = open("speech.wav", 'rb')
+    audio_bytes = audio_file.read()
+    st.audio(audio_bytes, format='audio/wav')
+
+def visualize_speech():
+    data, samplerate = sf.read("speech.wav")
+    duration = len(data) / samplerate
+
+    # Create time axis
+    time = np.linspace(0., duration, len(data))
+
+     # Plot the speech waveform
+    fig, ax = plt.subplots(figsize=(10, 4))
+    ax.plot(time, data)
+    ax.set(xlabel="Time (s)", ylabel="Amplitude", title="Speech Waveform")
+
+    # Display the plot using st.pyplot()
+    st.pyplot(fig)
+
+##
 # Function to capture live video stream and caption it
 def capture_and_caption_video():
     cap = cv2.VideoCapture(0)
